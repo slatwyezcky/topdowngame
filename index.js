@@ -465,7 +465,7 @@ class Enemy {
             enemy.height / 2 -
             this.game.player.y -
             this.game.player.height / 2 <
-            60
+            80
         ) {
           enemy.markedForDeletion = true;
           this.game.enemiesVanished.push(new EnemyVanish(enemy, this.game));
