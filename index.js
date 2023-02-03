@@ -107,14 +107,14 @@ class Background {
 class StaticBackground extends Background {
   constructor(game) {
     super(game);
-    this.image.src = "./assets/img/gamebackground.png";
+    this.image.src = "/topdowngame/assets/img/gamebackground.png";
   }
 }
 
 class Foreground extends Background {
   constructor(game) {
     super(game);
-    this.image.src = "./assets/img/foreground.png";
+    this.image.src = "/topdowngame/assets/img/foreground.png";
   }
 }
 
@@ -163,7 +163,7 @@ class Player {
   constructor(game) {
     this.game = game;
     this.image = new Image();
-    this.image.src = "./assets/img/player.png";
+    this.image.src = "/topdowngame/assets/img/player.png";
     this.spriteWidth = 48;
     this.spriteHeight = 48;
     this.width = 96;
@@ -355,7 +355,7 @@ class Enemy {
     this.maxFrameX = 5;
     this.frameY = 1;
     this.image = new Image();
-    this.image.src = "./assets/img/slime.png";
+    this.image.src = "/topdowngame/assets/img/slime.png";
     this.spriteWidth = 32;
     this.spriteHeight = 32;
     this.width = 64;
