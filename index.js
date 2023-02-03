@@ -18,9 +18,11 @@ class Game {
     this.boundaries = new Boundaries(this, collisionsMap);
     this.foreground = new Foreground(this);
     this.player = new Player(this);
+    this.UI = new UI(this);
     this.enemies = [];
-
+    this.enemiesVanished = [];
     this.movables = [];
+    this.gameScore = 0;
   }
 
   update() {
@@ -29,6 +31,7 @@ class Game {
       this.foreground,
       ...this.boundaries.boundaries,
       ...this.enemies,
+      ...this.enemiesVanished,
     ];
 
     // frame rate and classes updates
@@ -36,6 +39,7 @@ class Game {
       this.refreshRate = 0;
       this.player.update();
       this.enemies.forEach((enemy) => enemy.update());
+      this.enemiesVanished.forEach((enemy) => enemy.update());
     } else this.refreshRate++;
     // add and update Enemies
     if (this.enemies.length < 5) this.addEnemy();
@@ -43,6 +47,14 @@ class Game {
     this.player.checkCollision();
     this.enemies.forEach((enemy) => enemy.checkCollision());
     this.player.checkAttackMode();
+
+    this.enemies = this.enemies.filter(
+      (enemy) => enemy.markedForDeletion === false
+    );
+    this.enemiesVanished = this.enemiesVanished.filter(
+      (enemy) => enemy.markedForDeletion === false
+    );
+
     // movement
     if (
       this.input.keys.includes("ArrowLeft") &&
@@ -86,7 +98,9 @@ class Game {
     this.boundaries.draw(context);
     this.player.draw(context);
     this.enemies.forEach((enemy) => enemy.draw(context));
+    this.enemiesVanished.forEach((enemy) => enemy.draw(context));
     this.foreground.draw(context);
+    this.UI.draw(context);
   }
 }
 
@@ -440,7 +454,8 @@ class Enemy {
             enemy.height / 2 <
             60
         ) {
-          enemy.deathAnimation();
+          enemy.markedForDeletion = true;
+          this.game.enemiesVanished.push(new EnemyVanish(enemy, this.game));
         }
 
         if (
@@ -452,7 +467,8 @@ class Enemy {
             this.game.player.height / 2 <
             60
         ) {
-          enemy.deathAnimation();
+          enemy.markedForDeletion = true;
+          this.game.enemiesVanished.push(new EnemyVanish(enemy, this.game));
         }
 
         if (
@@ -464,7 +480,8 @@ class Enemy {
             enemy.width / 2 <
             60
         ) {
-          enemy.deathAnimation();
+          enemy.markedForDeletion = true;
+          this.game.enemiesVanished.push(new EnemyVanish(enemy, this.game));
         }
 
         if (
@@ -476,7 +493,8 @@ class Enemy {
             this.game.player.width / 2 <
             60
         ) {
-          enemy.deathAnimation();
+          enemy.markedForDeletion = true;
+          this.game.enemiesVanished.push(new EnemyVanish(enemy, this.game));
         }
       }
     });
@@ -484,22 +502,6 @@ class Enemy {
     if (this.game.player.collisionAlert) {
       this.moving = false;
     }
-  }
-
-  deathAnimation() {
-    this.maxFrameX = 4;
-    this.frameY = 4;
-    if (this.refreshRate > 7) {
-      if (this.frameX < this.maxFrameX) this.frameX++;
-      else {
-        this.markedForDeletion = true;
-        return;
-      }
-    } else this.refreshRate++;
-
-    this.game.enemies = this.game.enemies.filter(
-      (enemy) => enemy.markedForDeletion === false
-    );
   }
 
   draw(context) {
@@ -518,6 +520,48 @@ class Enemy {
     // context.arc(this.x + this.width / 2, this.y + this.height / 2, 15, 0, 360);
     // context.stroke();
     // context.strokeRect(this.x, this.y, this.width, this.height);
+  }
+}
+
+class EnemyVanish {
+  constructor(enemy, game) {
+    this.enemy = enemy;
+    this.game = game;
+    this.frameX = 0;
+    this.maxFrameX = 4;
+    this.frameY = 4;
+    this.image = new Image();
+    this.image.src = "/topdowngame/assets/img/slime.png";
+    this.spriteWidth = 32;
+    this.spriteHeight = 32;
+    this.x = this.enemy.x;
+    this.y = this.enemy.y;
+    this.width = 64;
+    this.height = 64;
+    this.markedForDeletion = false;
+  }
+  update() {
+    if (this.enemy.movingLeft) this.frameY = 9;
+    if (this.frameX < this.maxFrameX) {
+      this.frameX++;
+    } else {
+      this.markedForDeletion = true;
+      this.game.gameScore++;
+    }
+  }
+
+  draw(context) {
+    context.drawImage(
+      this.image,
+      this.frameX * this.spriteWidth,
+      this.frameY * this.spriteHeight,
+      this.spriteWidth,
+      this.spriteHeight,
+      this.x,
+      this.y,
+      this.width,
+      this.height
+    );
   }
 }
 
@@ -558,6 +602,19 @@ class InputHandler {
       )
         this.keys.splice(this.keys.indexOf(e.key), 1);
     });
+  }
+}
+
+class UI {
+  constructor(game) {
+    this.game = game;
+  }
+
+  draw(context) {
+    context.font = "bold 48px Silkscreen";
+    context.textAlign = "left";
+    context.fillStyle = "brown";
+    context.fillText("Score: " + this.game.gameScore, 20, 50);
   }
 }
 
