@@ -8,7 +8,7 @@ const canvasContext = canvas.getContext("2d");
 // Game Handler Class
 
 class Game {
-  constructor(width, height, collisionsMap) {
+  constructor(width, height, collisionsMap, audio) {
     this.width = width;
     this.height = height;
     this.refreshRate = 0;
@@ -19,6 +19,7 @@ class Game {
     this.foreground = new Foreground(this);
     this.player = new Player(this);
     this.UI = new UI(this);
+    this.audio = audio;
     this.enemies = [];
     this.enemiesVanished = [];
     this.movables = [];
@@ -90,7 +91,6 @@ class Game {
         this.background.y + Math.random() * 1600 + 1200
       )
     );
-    console.log(this.enemies);
   }
 
   draw(context) {
@@ -271,6 +271,10 @@ class Player {
       this.attack = true;
       this.moving = false;
     }
+
+    if (this.game.input.keys.includes("Control") && this.frameX === 1) {
+      this.game.audio.SwordHit.play();
+    }
   }
 
   checkCollision() {
@@ -448,6 +452,7 @@ class Enemy {
         if (
           this.game.input.lastKey === "ArrowUp" &&
           this.game.input.keys.includes("Control") &&
+          this.game.player.frameX === 2 &&
           this.game.player.y +
             this.game.player.height / 2 -
             enemy.y -
@@ -461,6 +466,7 @@ class Enemy {
         if (
           this.game.input.lastKey === "ArrowDown" &&
           this.game.input.keys.includes("Control") &&
+          this.game.player.frameX === 2 &&
           enemy.y +
             enemy.height / 2 -
             this.game.player.y -
@@ -474,6 +480,7 @@ class Enemy {
         if (
           this.game.input.lastKey === "ArrowLeft" &&
           this.game.input.keys.includes("Control") &&
+          this.game.player.frameX === 2 &&
           this.game.player.x +
             this.game.player.width / 2 -
             enemy.x -
@@ -487,6 +494,7 @@ class Enemy {
         if (
           this.game.input.lastKey === "ArrowRight" &&
           this.game.input.keys.includes("Control") &&
+          this.game.player.frameX === 2 &&
           enemy.x +
             enemy.width / 2 -
             this.game.player.x -
@@ -542,6 +550,9 @@ class EnemyVanish {
   }
   update() {
     if (this.enemy.movingLeft) this.frameY = 9;
+    if (this.frameX === 2) {
+      this.game.audio.Splash.play();
+    }
     if (this.frameX < this.maxFrameX) {
       this.frameX++;
     } else {
@@ -570,6 +581,7 @@ class InputHandler {
     this.game = game;
     this.keys = [];
     this.lastKey = "";
+    this.audioPlay = false;
 
     window.addEventListener("keydown", (e) => {
       if (
@@ -589,6 +601,10 @@ class InputHandler {
         e.key === "ArrowRight"
       ) {
         this.lastKey = e.key;
+      }
+      if (!this.audioPlay) {
+        this.game.audio.Map.play();
+        this.audioPlay = true;
       }
     });
 
@@ -618,7 +634,24 @@ class UI {
   }
 }
 
-const game = new Game(canvas.width, canvas.height, collisionsMap);
+const audio = {
+  Map: new Howl({
+    src: "/topdowngame/assets/audio/map.wav",
+    html5: true,
+    loop: true,
+    volume: 0.1,
+  }),
+  SwordHit: new Howl({
+    src: "/topdowngame/assets/audio/hit.wav",
+    volume: 0.03,
+  }),
+  Splash: new Howl({
+    src: "/topdowngame/assets/audio/splash.wav",
+    volume: 0.03,
+  }),
+};
+
+const game = new Game(canvas.width, canvas.height, collisionsMap, audio);
 
 function animate() {
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
@@ -627,4 +660,6 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-animate();
+window.addEventListener("load", () => {
+  animate();
+});
